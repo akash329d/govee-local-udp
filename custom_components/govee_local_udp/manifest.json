@@ -4,7 +4,7 @@
   "codeowners": ["@akash329d"],
   "config_flow": true,
   "dependencies": ["network"],
-  "documentation": "https://github.com/yourusername/govee_local_udp",
+  "documentation": "https://github.com/akash329d/govee_local_udp",
   "iot_class": "local_push",
   "requirements": [],
   "version": "0.1.0"
