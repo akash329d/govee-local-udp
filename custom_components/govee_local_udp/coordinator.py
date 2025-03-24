@@ -8,7 +8,7 @@ from collections.abc import Callable
 from typing import List
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
@@ -17,6 +17,7 @@ from .const import (
     CONF_LISTENING_PORT_DEFAULT,
     CONF_MULTICAST_ADDRESS_DEFAULT,
     CONF_TARGET_PORT_DEFAULT,
+    CONF_TEMP_ONLY_MODE,
     DOMAIN,
     SCAN_INTERVAL,
 )
@@ -40,6 +41,7 @@ class GoveeLocalUdpCoordinator(DataUpdateCoordinator[List[GoveeLocalDevice]]):
         )
         
         self.config_entry = config_entry
+        self._device_callbacks = {}
         
         # Check if forced IP addresses were provided
         forced_ips = config_entry.data.get(CONF_FORCED_IP_ADDRESSES, [])
@@ -61,6 +63,11 @@ class GoveeLocalUdpCoordinator(DataUpdateCoordinator[List[GoveeLocalDevice]]):
             for ip in forced_ips:
                 _LOGGER.debug(f"Adding forced IP to discovery queue: {ip}")
                 self._controller.add_device_to_queue(ip)
+        
+        # Register update listener for configuration changes
+        config_entry.async_on_unload(
+            config_entry.add_update_listener(self.async_options_updated)
+        )
 
     async def start(self) -> None:
         """Start the coordinator."""
@@ -98,9 +105,6 @@ class GoveeLocalUdpCoordinator(DataUpdateCoordinator[List[GoveeLocalDevice]]):
         """Set light color in kelvin."""
         await device.set_temperature(temperature)
 
-    async def set_scene(self, device: GoveeLocalDevice, scene: str) -> None:
-        """Set light scene."""
-        await device.set_scene(scene)
 
     @property
     def devices(self) -> List[GoveeLocalDevice]:
@@ -111,3 +115,23 @@ class GoveeLocalUdpCoordinator(DataUpdateCoordinator[List[GoveeLocalDevice]]):
         """Update device data."""
         self._controller.send_update_message()
         return self._controller.devices
+        
+    @callback
+    def register_device_callback(self, device_id: str, callback_fn):
+        """Register a callback for configuration changes affecting a device."""
+        self._device_callbacks[device_id] = callback_fn
+        
+    @callback
+    def unregister_device_callback(self, device_id: str):
+        """Unregister a device callback."""
+        if device_id in self._device_callbacks:
+            del self._device_callbacks[device_id]
+    
+    @staticmethod
+    async def async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Handle options update."""
+        coordinator = hass.data[DOMAIN][entry.entry_id]
+        
+        # Notify all lights of the options change
+        for device_id, callback_fn in coordinator._device_callbacks.items():
+            callback_fn(entry.options)

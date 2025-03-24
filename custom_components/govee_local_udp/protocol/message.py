@@ -16,7 +16,6 @@ MSG_STATUS = "devStatus"
 MSG_TURN = "turn"
 MSG_BRIGHTNESS = "brightness"
 MSG_COLOR = "colorwc"
-MSG_COMMAND = "ptReal"
 
 
 class GoveeLightFeatures(IntEnum):
@@ -26,8 +25,6 @@ class GoveeLightFeatures(IntEnum):
     BRIGHTNESS = 1
     COLOR_RGB = 2
     COLOR_KELVIN_TEMPERATURE = 4
-    SCENES = 8
-    SEGMENT_CONTROL = 16
 
 
 @dataclass
@@ -111,33 +108,8 @@ class ColorMessage(GoveeMessage):
             }
 
 
-@dataclass
-class SceneMessage(GoveeMessage):
-    """Set a scene."""
-
-    command: ClassVar[str] = MSG_COMMAND
-    scene_code: bytes
-    
-    def to_dict(self) -> dict:
-        """Convert message to dict format."""
-        # Convert scene code to base64 command format
-        # This is a simplified version, the actual implementation would need to properly encode the scene
-        return {"command": [self.scene_code.hex()]}
 
 
-@dataclass
-class SegmentColorMessage(GoveeMessage):
-    """Set segment color."""
-
-    command: ClassVar[str] = MSG_COMMAND
-    segment_data: bytes
-    rgb: Tuple[int, int, int]
-    
-    def to_dict(self) -> dict:
-        """Convert message to dict format."""
-        # This is a placeholder - segment control requires special encoding
-        # The actual implementation would need to properly encode the segment data
-        return {"command": [self.segment_data.hex()]}
 
 
 # Response objects

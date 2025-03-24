@@ -42,10 +42,6 @@ async def async_get_config_entry_diagnostics(
                 "has_brightness": bool(device.capabilities.features & 1),
                 "has_color_rgb": bool(device.capabilities.features & 2),
                 "has_color_temperature": bool(device.capabilities.features & 4),
-                "has_scenes": bool(device.capabilities.features & 8),
-                "has_segments": bool(device.capabilities.features & 16),
-                "scenes_count": len(device.capabilities.scenes),
-                "segments_count": len(device.capabilities.segments),
             },
         })
 

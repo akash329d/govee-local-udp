@@ -17,8 +17,6 @@ SCAN_INTERVAL = timedelta(seconds=30)
 DISCOVERY_TIMEOUT = 10
 STATUS_TIMEOUT = 5
 
-# Entity settings
-ATTR_SCENE = "scene"
 
 # Configuration options
 CONF_TEMP_ONLY_MODE = "temperature_only_mode"  # To force a light to only use temperature mode

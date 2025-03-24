@@ -8,11 +8,9 @@ from typing import Any
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_TEMP_KELVIN,
-    ATTR_EFFECT,
     ATTR_RGB_COLOR,
     ColorMode,
     LightEntity,
-    LightEntityFeature,
     filter_supported_color_modes,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -28,8 +26,6 @@ from .protocol.message import GoveeLightFeatures
 
 _LOGGER = logging.getLogger(__name__)
 
-# Scene that represents no active scene
-SCENE_NONE = "none"
 
 
 async def async_setup_entry(
@@ -61,17 +57,8 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
 
     _attr_has_entity_name = True
     _attr_name = None
-    _attr_effect: str | None = None
     _supported_color_modes: set[ColorMode]
     _fixed_color_mode: ColorMode | None = None
-    _last_color_state: (
-        tuple[
-            ColorMode | str | None,
-            int | None,
-            tuple[int, int, int] | int | None,
-        ]
-        | None
-    ) = None
 
     def __init__(
         self,
@@ -85,36 +72,43 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
 
         # Entity attributes
         self._attr_unique_id = f"{DOMAIN}_{device.device_id}"
+        
+        # Register for coordinator options updates
+        coordinator.register_device_callback(device.device_id, self._handle_options_update)
 
         # Get device capabilities
-        capabilities = device.capabilities
-        color_modes = {ColorMode.ONOFF}
-
+        self._capabilities = device.capabilities
+        self._supported_modes = {ColorMode.ONOFF}
+        
         # Check if temperature-only mode is enabled globally
         self._temperature_only_mode = coordinator.config_entry.options.get(CONF_TEMP_ONLY_MODE, False)
 
+        # Build available color modes based on current options
+        self._setup_color_modes()
+        
+    def _setup_color_modes(self) -> None:
+        """Set up supported color modes based on capabilities and current options."""
+        color_modes = {ColorMode.ONOFF}
+        
         # Map features to color modes
-        if GoveeLightFeatures.BRIGHTNESS & capabilities.features:
+        if GoveeLightFeatures.BRIGHTNESS & self._capabilities.features:
             color_modes.add(ColorMode.BRIGHTNESS)
             
         # Only add RGB mode if not in temperature-only mode
-        if (GoveeLightFeatures.COLOR_RGB & capabilities.features) and not self._temperature_only_mode:
+        if (GoveeLightFeatures.COLOR_RGB & self._capabilities.features) and not self._temperature_only_mode:
             color_modes.add(ColorMode.RGB)
             
-        if GoveeLightFeatures.COLOR_KELVIN_TEMPERATURE & capabilities.features:
+        if GoveeLightFeatures.COLOR_KELVIN_TEMPERATURE & self._capabilities.features:
             color_modes.add(ColorMode.COLOR_TEMP)
-            self._attr_min_color_temp_kelvin = 2000
-            self._attr_max_color_temp_kelvin = 9000
-
-        # Set scenes as effects if supported
-        if GoveeLightFeatures.SCENES & capabilities.features and capabilities.scenes:
-            self._attr_supported_features = LightEntityFeature.EFFECT
-            self._attr_effect_list = [SCENE_NONE, *capabilities.scenes.keys()]
-
+            self._attr_min_color_temp_kelvin = self._capabilities.min_kelvin
+            self._attr_max_color_temp_kelvin = self._capabilities.max_kelvin
+        
         # Filter and set the supported color modes
         self._supported_color_modes = filter_supported_color_modes(color_modes)
         if len(self._supported_color_modes) == 1:
             self._fixed_color_mode = next(iter(self._supported_color_modes))
+        else:
+            self._fixed_color_mode = None
 
         # Device info
         self._attr_device_info = DeviceInfo(
@@ -187,6 +181,18 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
     def _device_updated(self, device: GoveeLocalDevice) -> None:
         """Handle device updates."""
         self.async_write_ha_state()
+        
+    @callback
+    def _handle_options_update(self, options) -> None:
+        """Handle options updates."""
+        new_temp_only_mode = options.get(CONF_TEMP_ONLY_MODE, False)
+        
+        # Only update if the temperature-only mode setting has changed
+        if new_temp_only_mode != self._temperature_only_mode:
+            self._temperature_only_mode = new_temp_only_mode
+            self._setup_color_modes()
+            _LOGGER.debug(f"Updated temperature-only mode to {new_temp_only_mode} for {self.entity_id}")
+            self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the light."""
@@ -199,64 +205,22 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
             brightness = int((kwargs[ATTR_BRIGHTNESS] / 255.0) * 100.0)
             await self.coordinator.set_brightness(self._device, brightness)
 
-        # Apply colors/temperature - store last mode for scene restoration
+        # Apply colors/temperature
         if ATTR_RGB_COLOR in kwargs:
-            self._attr_effect = None
-            self._save_last_color_state()
             red, green, blue = kwargs[ATTR_RGB_COLOR]
             await self.coordinator.set_rgb_color(self._device, red, green, blue)
         elif ATTR_COLOR_TEMP_KELVIN in kwargs:
-            self._attr_effect = None
-            self._save_last_color_state()
             temperature = int(kwargs[ATTR_COLOR_TEMP_KELVIN])
             await self.coordinator.set_temperature(self._device, temperature)
         
-        # Apply scene/effect if provided
-        elif ATTR_EFFECT in kwargs and self.supported_features & LightEntityFeature.EFFECT:
-            effect = kwargs[ATTR_EFFECT]
-            if effect and self.effect_list and effect in self.effect_list:
-                if effect == SCENE_NONE:
-                    self._attr_effect = None
-                    await self._restore_last_color_state()
-                else:
-                    self._save_last_color_state()
-                    self._attr_effect = effect
-                    await self.coordinator.set_scene(self._device, effect)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the light."""
         await self.coordinator.turn_off(self._device)
-
-    def _save_last_color_state(self) -> None:
-        """Save the last color state for restoration after scenes."""
-        color_mode = self.color_mode
         
-        if color_mode == ColorMode.COLOR_TEMP:
-            color_data = self.color_temp_kelvin
-        elif color_mode == ColorMode.RGB:
-            color_data = self.rgb_color
-        else:
-            color_data = None
-            
-        self._last_color_state = (color_mode, self.brightness, color_data)
+    async def async_will_remove_from_hass(self) -> None:
+        """Clean up resources when entity is removed."""
+        # Remove the options update callback
+        self.coordinator.unregister_device_callback(self._device.device_id)
+        await super().async_will_remove_from_hass()
 
-    async def _restore_last_color_state(self) -> None:
-        """Restore the previously saved color state."""
-        if not self._last_color_state:
-            return
-            
-        color_mode, brightness, color_data = self._last_color_state
-        
-        # Restore color/temperature
-        if color_mode == ColorMode.COLOR_TEMP and isinstance(color_data, int):
-            await self.coordinator.set_temperature(self._device, color_data)
-        elif color_mode == ColorMode.RGB and isinstance(color_data, tuple) and len(color_data) == 3:
-            await self.coordinator.set_rgb_color(self._device, *color_data)
-            
-        # Restore brightness
-        if brightness is not None:
-            await self.coordinator.set_brightness(
-                self._device, int((brightness / 255.0) * 100.0)
-            )
-            
-        self._last_color_state = None

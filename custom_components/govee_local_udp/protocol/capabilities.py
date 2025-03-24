@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict
 
 from .message import GoveeLightFeatures
 
@@ -15,15 +15,8 @@ class GoveeLightCapabilities:
     """Capabilities of a Govee light."""
 
     features: GoveeLightFeatures = GoveeLightFeatures.NONE
-    scenes: Dict[str, bytes] = None
-    segments: List[bytes] = None
-    
-    def __post_init__(self):
-        """Initialize the scenes and segments dictionaries if needed."""
-        if self.scenes is None:
-            self.scenes = {}
-        if self.segments is None:
-            self.segments = []
+    min_kelvin: int = 2000
+    max_kelvin: int = 9000
 
 
 # Basic capability with just on/off functionality
@@ -94,6 +87,17 @@ GOVEE_LIGHT_CAPABILITIES: Dict[str, GoveeLightCapabilities] = {
             | GoveeLightFeatures.COLOR_RGB 
             | GoveeLightFeatures.COLOR_KELVIN_TEMPERATURE
         ),
+    ),
+    
+    # H60A1: RGB Light with limited kelvin range
+    "H60A1": GoveeLightCapabilities(
+        features=(
+            GoveeLightFeatures.BRIGHTNESS 
+            | GoveeLightFeatures.COLOR_RGB 
+            | GoveeLightFeatures.COLOR_KELVIN_TEMPERATURE
+        ),
+        min_kelvin=2200,
+        max_kelvin=6500,
     ),
     
     # Default capabilities for unknown devices - only enable basic features

@@ -17,12 +17,9 @@ from .message import (
     DevStatusMessage,
     DeviceStatus,
     GoveeDevice,
-    GoveeLightFeatures,
     GoveeMessage,
     MessageResponseFactory,
     OnOffMessage,
-    SceneMessage,
-    SegmentColorMessage,
     ScanMessage,
 )
 
@@ -211,10 +208,6 @@ class GoveeLocalDevice:
         if self._controller:
             await self._controller.set_color(self, temperature=temperature)
     
-    async def set_scene(self, scene: str) -> None:
-        """Set the device to a scene."""
-        if self._controller:
-            await self._controller.set_scene(self, scene)
     
     def __str__(self) -> str:
         """Return a string representation of the device."""
@@ -652,45 +645,7 @@ class GoveeController:
         
         await self._execute_command(device, message, verify_state)
     
-    async def set_scene(self, device: GoveeLocalDevice, scene: str) -> None:
-        """Set device to a scene."""
-        if (
-            not device.capabilities or
-            GoveeLightFeatures.SCENES & device.capabilities.features == 0
-        ):
-            self._logger.warning(f"Scenes are not supported by device {device}")
-            return
-        
-        scene_code = device.capabilities.scenes.get(scene.lower())
-        if not scene_code:
-            self._logger.warning(f"Scene {scene} is not available for device {device}")
-            return
-        
-        message = SceneMessage(scene_code=scene_code)
-        await self._execute_command(device, message)
     
-    async def set_segment_color(
-        self, device: GoveeLocalDevice, segment: int, rgb: Tuple[int, int, int]
-    ) -> None:
-        """Set color for a specific segment of the device."""
-        if (
-            not device.capabilities or
-            GoveeLightFeatures.SEGMENT_CONTROL & device.capabilities.features == 0
-        ):
-            self._logger.warning(f"Segment control is not supported by device {device}")
-            return
-        
-        if segment < 1 or segment > len(device.capabilities.segments):
-            self._logger.warning(f"Segment index {segment} is not valid for device {device}")
-            return
-        
-        segment_data = device.capabilities.segments[segment - 1]
-        if not segment_data:
-            self._logger.warning(f"Segment {segment} is not supported by device {device}")
-            return
-        
-        message = SegmentColorMessage(segment_data=segment_data, rgb=rgb)
-        await self._execute_command(device, message)
     
     def get_device_by_ip(self, ip: str) -> Optional[GoveeLocalDevice]:
         """Get a device by IP address."""
