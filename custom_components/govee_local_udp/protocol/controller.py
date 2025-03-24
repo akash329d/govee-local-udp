@@ -118,10 +118,7 @@ class GoveeLocalDevice:
     @property
     def brightness(self) -> int | None:
         """Return the device brightness (0-100)."""
-        # Ensure we always return at least 1 for brightness
-        if self._brightness is None:
-            return None
-        return int((self._brightness / 100.0) * 255.0)
+        return self._brightness
     
     @property
     def rgb_color(self) -> Optional[Tuple[int, int, int]]:

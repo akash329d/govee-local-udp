@@ -13,7 +13,7 @@ CONF_DISCOVERY_INTERVAL_DEFAULT = 60
 CONF_FORCED_IP_ADDRESSES = "forced_ip_addresses"
 
 # Timeouts and intervals
-SCAN_INTERVAL = timedelta(seconds=30)
+SCAN_INTERVAL = timedelta(seconds=5)
 DISCOVERY_TIMEOUT = 10
 STATUS_TIMEOUT = 5
 
