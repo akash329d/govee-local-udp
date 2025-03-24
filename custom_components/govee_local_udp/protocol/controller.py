@@ -480,6 +480,10 @@ class GoveeController:
                     await existing_task
                 except asyncio.CancelledError:
                     self._logger.debug(f"Cancelled pending {message.command} task for device {device}")
+                
+                # Add a small delay to allow any in-flight commands to complete
+                # This helps prevent command overlap on the device
+                await asyncio.sleep(0.3)
         
         # Create and store the new task
         task = self._loop.create_task(
