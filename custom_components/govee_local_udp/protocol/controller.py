@@ -504,8 +504,9 @@ class GoveeController:
         # Send the initial message immediately
         self._send_message(message, device)
         
-        # Always wait 100ms between msg and status update to lessen spam
-        await asyncio.sleep(0.1)
+        # Wait longer between command and status update to allow device to process the command
+        # This helps prevent the temporary brightness jump issue
+        await asyncio.sleep(0.5)
         
         # Request initial status update
         self._send_update_message(device)
@@ -568,7 +569,7 @@ class GoveeController:
                     
                     # Send the command again
                     self._send_message(message, device)
-                    await asyncio.sleep(0.1)
+                    await asyncio.sleep(0.5)
                     self._send_update_message(device)
                     self._logger.debug(f"Retry {i+1} for {device}: {message.command}")
                 except asyncio.CancelledError:
@@ -595,6 +596,9 @@ class GoveeController:
                     return
                 
                 self._send_message(message, device)
+                
+                # Wait before requesting status update to allow device to process command
+                await asyncio.sleep(0.5)
                 
                 # Request a status update after sending the command
                 self._send_update_message(device)
@@ -759,6 +763,13 @@ class GoveeController:
         device = self.get_device_by_ip(ip)
         
         if device:
+            self._logger.debug(
+                f"Status update from {device}: on={message.on}, "
+                f"brightness={message.brightness}, "
+                f"color=({message.color.r},{message.color.g},{message.color.b}), "
+                f"temp={message.color_temperature_kelvin}"
+            )
+            
             device.update(message)
             
             # Check if we're waiting for a state verification on this device
