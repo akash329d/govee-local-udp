@@ -2,14 +2,18 @@
   "config": {
     "step": {
       "user": {
-        "description": "Set up Govee Local UDP to control your Govee devices locally without cloud dependence. {note}",
+        "title": "Govee Local UDP Integration",
+        "description": "Set up Govee Local UDP to control your Govee devices locally using UDP communication without cloud dependence. {note}",
         "data": {
-          "forced_ip_address": "Forced IP address (optional)"
+          "forced_ip_addresses": "Forced IP addresses (comma-separated, optional)"
         }
       },
       "confirm": {
         "description": "Govee Local UDP will discover your Govee devices on the local network. Do you want to continue?"
       }
+    },
+    "error": {
+      "invalid_ip_address": "One or more IP addresses are invalid. Please provide valid IP addresses."
     },
     "abort": {
       "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
@@ -20,11 +24,15 @@
     "step": {
       "init": {
         "title": "Govee Local UDP Options",
-        "description": "Configure options for your Govee devices",
+        "description": "Configure options for your Govee devices and add specific IP addresses if needed",
         "data": {
-          "temperature_only_mode": "Temperature-only mode (prevents RGB control)"
+          "temperature_only_mode": "Temperature-only mode (prevents RGB control)",
+          "forced_ip_addresses": "Forced IP addresses (comma-separated, optional)"
         }
       }
+    },
+    "error": {
+      "invalid_ip_address": "One or more IP addresses are invalid. Please provide valid IP addresses."
     }
   }
 }

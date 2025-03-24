@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import logging
+import ipaddress
 from typing import Any
 
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, OptionsFlow
+from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import config_validation as cv
 
-from .const import CONF_TEMP_ONLY_MODE, CONF_FORCED_IP_ADDRESS, DOMAIN
+from .const import CONF_TEMP_ONLY_MODE, CONF_FORCED_IP_ADDRESSES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,26 +29,40 @@ class GoveeLocalUdpFlowHandler(ConfigFlow, domain=DOMAIN):
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
 
+        errors = {}
+
         if user_input is not None:
-            # Extract the forced_ip_address if provided
-            forced_ip = user_input.get(CONF_FORCED_IP_ADDRESS)
-            data = {}
-            if forced_ip:
-                data[CONF_FORCED_IP_ADDRESS] = forced_ip
-                
-            return self.async_create_entry(
-                title="Govee Local UDP",
-                data=data,
-                options={CONF_TEMP_ONLY_MODE: False},
-            )
+            # Extract and validate the forced IP addresses if provided
+            ip_addresses = []
+            if forced_ips := user_input.get(CONF_FORCED_IP_ADDRESSES):
+                for ip in [ip.strip() for ip in forced_ips.split(",")]:
+                    if ip:
+                        try:
+                            ipaddress.ip_address(ip)
+                            ip_addresses.append(ip)
+                        except ValueError:
+                            errors[CONF_FORCED_IP_ADDRESSES] = "invalid_ip_address"
+            
+            # If no errors, create the config entry
+            if not errors:
+                data = {}
+                if ip_addresses:
+                    data[CONF_FORCED_IP_ADDRESSES] = ip_addresses
+                    
+                return self.async_create_entry(
+                    title="Govee Local UDP",
+                    data=data,
+                    options={CONF_TEMP_ONLY_MODE: False},
+                )
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({
-                vol.Optional(CONF_FORCED_IP_ADDRESS): str,
+                vol.Optional(CONF_FORCED_IP_ADDRESSES): str,
             }),
+            errors=errors,
             description_placeholders={
-                "note": "Discovery will automatically search for Govee devices on your network. If your devices aren't discovered, you can specify the IP address here."
+                "note": "Discovery will automatically search for Govee devices on your network. If your devices aren't discovered, you can specify their IP addresses here (comma-separated, e.g., 192.168.1.100, 192.168.1.101)."
             }
         )
 
@@ -65,8 +82,33 @@ class OptionsFlowHandler(OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage options."""
+        errors = {}
+
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            # Extract and validate the forced IP addresses if provided
+            ip_addresses = []
+            if forced_ips := user_input.get(CONF_FORCED_IP_ADDRESSES):
+                for ip in [ip.strip() for ip in forced_ips.split(",")]:
+                    if ip:
+                        try:
+                            ipaddress.ip_address(ip)
+                            ip_addresses.append(ip)
+                        except ValueError:
+                            errors[CONF_FORCED_IP_ADDRESSES] = "invalid_ip_address"
+            
+            # If no errors, update the config entry
+            if not errors:
+                data = {**user_input}
+                if ip_addresses:
+                    data[CONF_FORCED_IP_ADDRESSES] = ip_addresses
+                else:
+                    data.pop(CONF_FORCED_IP_ADDRESSES, None)
+                    
+                return self.async_create_entry(title="", data=data)
+
+        # Get current forced IP addresses as a comma-separated string
+        current_ips = self.config_entry.data.get(CONF_FORCED_IP_ADDRESSES, [])
+        ip_string = ", ".join(current_ips) if current_ips else ""
 
         return self.async_show_form(
             step_id="init",
@@ -75,5 +117,10 @@ class OptionsFlowHandler(OptionsFlow):
                     CONF_TEMP_ONLY_MODE,
                     default=self.config_entry.options.get(CONF_TEMP_ONLY_MODE, False),
                 ): bool,
+                vol.Optional(
+                    CONF_FORCED_IP_ADDRESSES,
+                    default=ip_string,
+                ): str,
             }),
+            errors=errors,
         )
