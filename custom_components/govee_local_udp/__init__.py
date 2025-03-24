@@ -12,7 +12,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from .const import CONF_FORCED_IP_ADDRESSES, CONF_TEMP_ONLY_MODE, DISCOVERY_TIMEOUT, DOMAIN
+from .const import CONF_TEMP_ONLY_MODE, DISCOVERY_TIMEOUT, DOMAIN
 from .coordinator import GoveeLocalUdpCoordinator
 from .protocol.controller import LISTENING_PORT
 from .services import async_setup_services, async_unload_services

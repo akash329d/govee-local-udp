@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, List, Optional, Tuple, Union, cast
+from typing import Any
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,

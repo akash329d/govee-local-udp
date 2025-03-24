@@ -7,8 +7,8 @@ import ipaddress
 import logging
 import socket
 from collections.abc import Callable
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .capabilities import GoveeLightCapabilities, get_capabilities_for_model
 from .message import (

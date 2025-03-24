@@ -11,7 +11,6 @@ from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 from .coordinator import GoveeLocalUdpCoordinator
-from .protocol.controller import GoveeLocalDevice
 
 # Keys to redact from the diagnostics data
 TO_REDACT = {CONF_IP_ADDRESS, "ip"}

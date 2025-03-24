@@ -1,15 +1,8 @@
 # Govee Local UDP
 
-This is a Home Assistant integration that provides local control of Govee devices using the local UDP protocol. This implementation follows best practices and includes robust retry logic for improved reliability.
+This is a Home Assistant integration that provides local control of Govee lights using the local UDP protocol. 
 
-## Features
-
-- Local control of Govee devices over UDP (no cloud dependency)
-- Robust command execution with retry logic
-- State verification to ensure commands were successfully applied
-- Support for lights with various capabilities (on/off, brightness, color, temperature, scenes)
-- Auto-discovery of devices on the local network
-- Temperature-only mode option for better HomeKit compatibility
+It's somewhat similar to https://github.com/Galorhallen/govee-local-api but I had some trouble with that integration so this primarily adds retry/verification logic on the UDP API calls, and also adds support for "temperature only mode", which presents all lights without RGB. This is useful as in HomeKit, the presets will switch all lights to RGB, and Govee uses separate LEDs for RGB / color temp, so you end up getting super dim light in RGB mode. 
 
 ## Installation
 
@@ -46,4 +39,4 @@ You can configure additional options by clicking on the "Configure" button on th
 
 ## Supported Devices
 
-Any Govee device that supports the local UDP API should work with this integration.
+Any Govee light that supports the local UDP API should work with this integration. I have only tested with the ceiling light though.
