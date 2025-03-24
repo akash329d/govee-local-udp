@@ -222,10 +222,7 @@ class MessageResponseFactory:
             # Handle status responses
             elif cmd == MSG_STATUS:
                 color_data = msg_data.get("color", {})
-                # Log the incoming data to help debug brightness issues
-                _LOGGER.debug(f"Received status data: {msg_data}")
                 brightness_value = msg_data.get("brightness", 0)
-                _LOGGER.debug(f"Parsed brightness value: {brightness_value}")
                 return DeviceStatus(
                     on=msg_data.get("onOff", 0) == 1,
                     brightness=brightness_value,
