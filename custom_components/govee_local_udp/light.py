@@ -128,12 +128,9 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
         return self._device.on
 
     @property
-    def brightness(self) -> int | None:
-        """Return the brightness of the light."""
-        # Always return brightness if we have it, even if the color mode doesn't indicate it
-        if self._device.brightness is not None:
-            return int((self._device.brightness / 100.0) * 255.0)
-        return None
+    def brightness(self) -> int:
+        """Return the brightness of this light between 0..255."""
+        return int((self._device.brightness / 100.0) * 255.0)
 
     @property
     def rgb_color(self) -> tuple[int, int, int] | None:
