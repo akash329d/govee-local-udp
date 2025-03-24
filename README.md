@@ -25,8 +25,9 @@ This is a Home Assistant integration that provides local control of Govee device
 
 ### Manual Installation
 
-1. Copy the `govee_local_udp` folder to your `custom_components` folder
-2. Restart Home Assistant
+1. Download or clone this repository
+2. Copy the `custom_components/govee_local_udp` folder to the `custom_components` folder in your Home Assistant configuration directory
+3. Restart Home Assistant
 
 ## Configuration
 
