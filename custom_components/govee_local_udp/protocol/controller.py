@@ -79,6 +79,9 @@ class GoveeLocalDevice:
         self._rgb_color: Optional[Tuple[int, int, int]] = (255, 255, 255)
         self._color_temp: Optional[int] = None
         self._lastseen = datetime.now()
+        
+        # Command tracking for cooldown periods
+        self._last_command_time: Dict[str, datetime] = {}
     
     @property
     def ip(self) -> str:
@@ -170,12 +173,25 @@ class GoveeLocalDevice:
     
     def update(self, status: DeviceStatus) -> None:
         """Update the device state from a status message."""
-        self._on = status.on
-        self._brightness = status.brightness
-        self._rgb_color = (status.color.r, status.color.g, status.color.b)
+        # Check for cooldown periods for specific properties
+        now = datetime.now()
         
+        # Update on/off state if not in cooldown
+        if "on" not in self._last_command_time or (now - self._last_command_time["on"]).total_seconds() > 0.5:
+            self._on = status.on
+        
+        # Update brightness if not in cooldown
+        if "brightness" not in self._last_command_time or (now - self._last_command_time["brightness"]).total_seconds() > 0.5:
+            self._brightness = status.brightness
+        
+        # Update RGB color if not in cooldown
+        if "color" not in self._last_command_time or (now - self._last_command_time["color"]).total_seconds() > 0.5:
+            self._rgb_color = (status.color.r, status.color.g, status.color.b)
+        
+        # Update color temperature if not in cooldown and value is valid
         if status.color_temperature_kelvin > 0:
-            self._color_temp = status.color_temperature_kelvin
+            if "temperature" not in self._last_command_time or (now - self._last_command_time["temperature"]).total_seconds() > 0.5:
+                self._color_temp = status.color_temperature_kelvin
         
         self.update_lastseen()
         
@@ -186,26 +202,36 @@ class GoveeLocalDevice:
     async def turn_on(self) -> None:
         """Turn the device on."""
         if self._controller:
+            # Record the command time
+            self._last_command_time["on"] = datetime.now()
             await self._controller.turn_on_off(self, True)
     
     async def turn_off(self) -> None:
         """Turn the device off."""
         if self._controller:
+            # Record the command time
+            self._last_command_time["on"] = datetime.now()
             await self._controller.turn_on_off(self, False)
     
     async def set_brightness(self, brightness: int) -> None:
         """Set the device brightness (0-100)."""
         if self._controller:
+            # Record the command time
+            self._last_command_time["brightness"] = datetime.now()
             await self._controller.set_brightness(self, brightness)
     
     async def set_rgb_color(self, red: int, green: int, blue: int) -> None:
         """Set the device RGB color."""
         if self._controller:
+            # Record the command time
+            self._last_command_time["color"] = datetime.now()
             await self._controller.set_color(self, rgb=(red, green, blue))
     
     async def set_temperature(self, temperature: int) -> None:
         """Set the device color temperature in Kelvin."""
         if self._controller:
+            # Record the command time
+            self._last_command_time["temperature"] = datetime.now()
             await self._controller.set_color(self, temperature=temperature)
     
     
