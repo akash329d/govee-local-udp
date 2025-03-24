@@ -180,54 +180,90 @@ class MessageResponseFactory:
     def create_message(self, data: bytes) -> Optional[Union[GoveeDevice, DeviceStatus]]:
         """Parse response data and create the appropriate message object."""
         try:
-            json_data = json.loads(data.decode("utf-8"))
+            json_str = data.decode("utf-8")
+            _LOGGER.debug(f"Received message: {json_str[:200]}")
+            json_data = json.loads(json_str)
             
+            # Check if it's a valid message format
             if not json_data.get("msg"):
                 _LOGGER.warning("Invalid message format, missing 'msg' field")
                 return None
                 
             msg = json_data["msg"]
             cmd = msg.get("cmd")
-            data = msg.get("data")
+            msg_data = msg.get("data", {})
             
-            if not cmd or not data:
+            if not cmd or not msg_data:
                 _LOGGER.warning(f"Invalid message format, missing 'cmd' or 'data' field: {json_data}")
                 return None
-                
+            
+            # First, try to handle scan responses (device discovery)
             if cmd == MSG_SCAN:
                 # The device field can be either a string (device ID) or an object
-                device_field = data.get("device")
-                device_id = device_field if isinstance(device_field, str) else ""
+                device_field = msg_data.get("device")
+                ip = msg_data.get("ip", "unknown")
+                device_id = ""
+                sku = ""
                 
-                # If device_id is empty, try to get it from device object
-                if not device_id and isinstance(device_field, dict):
+                # If device is a string, it's likely the device ID
+                if isinstance(device_field, str):
+                    device_id = device_field
+                    _LOGGER.debug(f"Device ID from string: {device_id}")
+                    # Get SKU (model) from main data object
+                    sku = msg_data.get("sku", "")
+                elif isinstance(device_field, dict):
+                    # Otherwise it's an object with a deviceId field
                     device_id = device_field.get("deviceId", "")
-                    
+                    _LOGGER.debug(f"Device ID from object: {device_id}")
+                    # Try to get SKU from device object first
+                    sku = device_field.get("sku", "")
+                
+                # If we still don't have a device ID, try finding it in the main data
+                if not device_id and "deviceId" in msg_data:
+                    device_id = msg_data["deviceId"]
+                
+                # If we still don't have a SKU, try the main data
+                if not sku and "sku" in msg_data:
+                    sku = msg_data["sku"]
+                
+                _LOGGER.debug(f"Found device: ID={device_id}, SKU={sku}, IP={ip}")
+                
+                # Hardware/software versions
+                ble_hw = msg_data.get("bleVersionHard", "")
+                ble_sw = msg_data.get("bleVersionSoft", "")
+                wifi_hw = msg_data.get("wifiVersionHard", "")
+                wifi_sw = msg_data.get("wifiVersionSoft", "")
+                
+                if not device_id:
+                    _LOGGER.warning(f"Could not extract device ID from message: {json_str[:200]}")
+                    return None
+                
                 return GoveeDevice(
-                    ip=data.get("ip"),
+                    ip=ip,
                     device_id=device_id,
-                    model=data.get("sku"),
-                    ble_hardware_version=data.get("bleVersionHard", ""),
-                    ble_software_version=data.get("bleVersionSoft", ""),
-                    wifi_hardware_version=data.get("wifiVersionHard", ""),
-                    wifi_software_version=data.get("wifiVersionSoft", ""),
+                    model=sku,
+                    ble_hardware_version=ble_hw,
+                    ble_software_version=ble_sw,
+                    wifi_hardware_version=wifi_hw,
+                    wifi_software_version=wifi_sw,
                 )
+            # Handle status responses
             elif cmd == MSG_STATUS:
-                color_data = data.get("color", {})
+                color_data = msg_data.get("color", {})
                 return DeviceStatus(
-                    on=data.get("onOff", 0) == 1,
-                    brightness=data.get("brightness", 0),
+                    on=msg_data.get("onOff", 0) == 1,
+                    brightness=msg_data.get("brightness", 0),
                     color=DeviceColor(
                         r=color_data.get("r", 0),
                         g=color_data.get("g", 0),
                         b=color_data.get("b", 0),
                     ),
-                    color_temperature_kelvin=data.get("colorTemInKelvin", 0),
+                    color_temperature_kelvin=msg_data.get("colorTemInKelvin", 0),
                 )
                 
         except json.JSONDecodeError as ex:
             _LOGGER.warning(f"Failed to decode JSON: {ex}")
         except Exception as ex:
-            _LOGGER.warning(f"Error parsing message: {ex}")
+            _LOGGER.warning(f"Error parsing message: {ex}, data: {data[:200]}")
             
         return None

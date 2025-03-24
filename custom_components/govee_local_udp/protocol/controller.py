@@ -737,22 +737,36 @@ class GoveeController:
     def datagram_received(self, data: bytes, addr: Tuple) -> None:
         """Handle received datagram."""
         if data:
+            self._logger.debug(f"Received {len(data)} bytes from {addr}")
             self._loop.create_task(self._handle_datagram_received(data, addr))
     
     async def _handle_datagram_received(self, data: bytes, addr: Tuple) -> None:
         """Handle the received datagram asynchronously."""
         try:
+            # Log the raw data for debugging
+            try:
+                json_str = data.decode("utf-8")
+                self._logger.debug(f"Raw data from {addr}: {json_str[:200]}")
+            except:
+                self._logger.debug(f"Non-text data received from {addr}")
+            
             message = self._message_factory.create_message(data)
             if not message:
-                self._logger.debug(f"Unknown message received from {addr}. Message: {data[:50]}")
+                self._logger.debug(f"Message factory couldn't parse data from {addr}. First 100 bytes: {data[:100]}")
                 return
             
             if isinstance(message, GoveeDevice):
+                self._logger.debug(f"Device info message received from {addr}: {message.device_id}")
                 await self._handle_scan_response(message)
             elif isinstance(message, DeviceStatus):
+                self._logger.debug(f"Status update message received from {addr}")
                 await self._handle_status_update_response(message, addr)
+            else:
+                self._logger.debug(f"Unknown message type received: {type(message)}")
         except Exception as ex:
             self._logger.error(f"Error handling message: {ex}")
+            import traceback
+            self._logger.error(traceback.format_exc())
     
     async def _handle_status_update_response(self, message: DeviceStatus, addr: Tuple) -> None:
         """Handle a status update response."""
@@ -773,15 +787,26 @@ class GoveeController:
     
     async def _handle_scan_response(self, device_info: GoveeDevice) -> None:
         """Handle a scan response."""
+        if not device_info.device_id:
+            self._logger.warning("Received device info with empty device_id")
+            return
+            
         fingerprint = device_info.device_id
+        self._logger.debug(f"Processing scan response for device with ID: {fingerprint}")
         device = self.get_device_by_fingerprint(fingerprint)
         
         if device:
+            # Update existing device's IP if it changed
+            if device.ip != device_info.ip and device_info.ip != "unknown":
+                self._logger.info(f"Device {fingerprint} IP changed from {device.ip} to {device_info.ip}")
+                device._ip = device_info.ip
+            
             if self._call_discovered_callback(device, False):
                 device.update_lastseen()
                 self._logger.debug(f"Device updated: {device}")
         else:
             # Create a new device
+            self._logger.info(f"Creating new device: ID={device_info.device_id}, Model={device_info.model}, IP={device_info.ip}")
             device = GoveeLocalDevice(
                 controller=self,
                 ip=device_info.ip,
@@ -791,7 +816,7 @@ class GoveeController:
             
             if self._call_discovered_callback(device, True):
                 self._devices[fingerprint] = device
-                self._logger.debug(f"Device discovered: {device}")
+                self._logger.info(f"Device discovered: {device}")
             else:
                 self._logger.debug(f"Device {device} ignored by callback")
         
