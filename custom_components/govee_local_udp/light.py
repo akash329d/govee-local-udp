@@ -122,8 +122,13 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
             name=f"Govee {device.model}",
             manufacturer=MANUFACTURER,
             model=device.model,
-            sw_version=f"{device.ble_software_version} / {device.wifi_software_version}",
         )
+        
+        # Add version information if available
+        ble_sw = getattr(device, "ble_software_version", "")
+        wifi_sw = getattr(device, "wifi_software_version", "")
+        if ble_sw or wifi_sw:
+            self._attr_device_info["sw_version"] = f"{ble_sw} / {wifi_sw}"
 
     @property
     def is_on(self) -> bool:

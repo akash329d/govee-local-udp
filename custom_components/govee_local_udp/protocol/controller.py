@@ -56,6 +56,10 @@ class GoveeLocalDevice:
         model: str,
         capabilities: Optional[GoveeLightCapabilities] = None,
         is_manual: bool = False,
+        ble_hardware_version: str = "",
+        ble_software_version: str = "",
+        wifi_hardware_version: str = "",
+        wifi_software_version: str = "",
     ) -> None:
         """Initialize the device."""
         self._controller = controller
@@ -65,6 +69,12 @@ class GoveeLocalDevice:
         self._capabilities = capabilities or get_capabilities_for_model(model)
         self._is_manual = is_manual
         self._update_callbacks: List[Callable[[GoveeLocalDevice], None]] = []
+        
+        # Version information
+        self._ble_hardware_version = ble_hardware_version
+        self._ble_software_version = ble_software_version
+        self._wifi_hardware_version = wifi_hardware_version
+        self._wifi_software_version = wifi_software_version
         
         # State properties
         self._on: bool = False
@@ -127,6 +137,26 @@ class GoveeLocalDevice:
     def lastseen(self) -> datetime:
         """Return when the device was last seen."""
         return self._lastseen
+        
+    @property
+    def ble_hardware_version(self) -> str:
+        """Return the BLE hardware version."""
+        return self._ble_hardware_version
+        
+    @property
+    def ble_software_version(self) -> str:
+        """Return the BLE software version."""
+        return self._ble_software_version
+        
+    @property
+    def wifi_hardware_version(self) -> str:
+        """Return the WiFi hardware version."""
+        return self._wifi_hardware_version
+        
+    @property
+    def wifi_software_version(self) -> str:
+        """Return the WiFi software version."""
+        return self._wifi_software_version
     
     def update_lastseen(self) -> None:
         """Update the last seen timestamp."""
@@ -812,6 +842,10 @@ class GoveeController:
                 ip=device_info.ip,
                 device_id=device_info.device_id,
                 model=device_info.model,
+                ble_hardware_version=device_info.ble_hardware_version,
+                ble_software_version=device_info.ble_software_version,
+                wifi_hardware_version=device_info.wifi_hardware_version,
+                wifi_software_version=device_info.wifi_software_version,
             )
             
             if self._call_discovered_callback(device, True):
