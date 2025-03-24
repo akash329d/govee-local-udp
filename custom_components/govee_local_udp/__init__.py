@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import CONF_TEMP_ONLY_MODE, DISCOVERY_TIMEOUT, DOMAIN
-from .coordinator import GoveeLocalUDPCoordinator
+from .coordinator import GoveeLocalUdpCoordinator
 from .protocol.controller import LISTENING_PORT
 from .services import async_setup_services, async_unload_services
 
@@ -36,7 +36,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry, options={CONF_TEMP_ONLY_MODE: False}
         )
         
-    coordinator = GoveeLocalUDPCoordinator(hass, entry)
+    coordinator = GoveeLocalUdpCoordinator(hass, entry)
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
