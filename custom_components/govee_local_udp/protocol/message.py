@@ -195,9 +195,17 @@ class MessageResponseFactory:
                 return None
                 
             if cmd == MSG_SCAN:
+                # The device field can be either a string (device ID) or an object
+                device_field = data.get("device")
+                device_id = device_field if isinstance(device_field, str) else ""
+                
+                # If device_id is empty, try to get it from device object
+                if not device_id and isinstance(device_field, dict):
+                    device_id = device_field.get("deviceId", "")
+                    
                 return GoveeDevice(
                     ip=data.get("ip"),
-                    device_id=data.get("device"),
+                    device_id=device_id,
                     model=data.get("sku"),
                     ble_hardware_version=data.get("bleVersionHard", ""),
                     ble_software_version=data.get("bleVersionSoft", ""),
