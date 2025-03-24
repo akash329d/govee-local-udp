@@ -13,7 +13,7 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 
-from .const import CONF_TEMP_ONLY_MODE, DOMAIN
+from .const import CONF_TEMP_ONLY_MODE, CONF_FORCED_IP_ADDRESS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,9 +29,15 @@ class GoveeLocalUdpFlowHandler(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="single_instance_allowed")
 
         if user_input is not None:
+            # Extract the forced_ip_address if provided
+            forced_ip = user_input.get(CONF_FORCED_IP_ADDRESS)
+            data = {}
+            if forced_ip:
+                data[CONF_FORCED_IP_ADDRESS] = forced_ip
+                
             return self.async_create_entry(
                 title="Govee Local UDP",
-                data={},
+                data=data,
                 options={CONF_TEMP_ONLY_MODE: False},
             )
 

@@ -13,6 +13,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     CONF_DISCOVERY_INTERVAL_DEFAULT,
+    CONF_FORCED_IP_ADDRESS,
     CONF_LISTENING_PORT_DEFAULT,
     CONF_MULTICAST_ADDRESS_DEFAULT,
     CONF_TARGET_PORT_DEFAULT,
@@ -37,7 +38,12 @@ class GoveeLocalUdpCoordinator(DataUpdateCoordinator[List[GoveeLocalDevice]]):
             name=DOMAIN,
             update_interval=SCAN_INTERVAL,
         )
-
+        
+        self.config_entry = config_entry
+        
+        # Check if a forced IP address was provided
+        forced_ip = config_entry.data.get(CONF_FORCED_IP_ADDRESS)
+        
         self._controller = GoveeController(
             loop=hass.loop,
             logger=_LOGGER,
@@ -49,6 +55,11 @@ class GoveeLocalUdpCoordinator(DataUpdateCoordinator[List[GoveeLocalDevice]]):
             discovered_callback=None,
             update_enabled=True,
         )
+        
+        # If a forced IP was provided, add it to the discovery queue
+        if forced_ip:
+            _LOGGER.debug(f"Adding forced IP to discovery queue: {forced_ip}")
+            self._controller.add_device_to_queue(forced_ip)
 
     async def start(self) -> None:
         """Start the coordinator."""
