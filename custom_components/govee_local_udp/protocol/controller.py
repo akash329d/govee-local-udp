@@ -34,7 +34,7 @@ COMMAND_PORT = 4003
 # Timers and intervals
 DISCOVERY_INTERVAL = 60  # Search for new devices every 60 seconds
 EVICT_INTERVAL = DISCOVERY_INTERVAL * 3  # Remove devices after 3x discovery interval
-UPDATE_INTERVAL = 30  # Update device status every 30 seconds
+UPDATE_INTERVAL = 5  # Update device status every 5 seconds
 RETRY_PATTERN = [0.2, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 7.0, 10.0]  # Retry backoff pattern
 
 # Connection retry settings
@@ -116,9 +116,12 @@ class GoveeLocalDevice:
         return self._on
     
     @property
-    def brightness(self) -> int:
+    def brightness(self) -> int | None:
         """Return the device brightness (0-100)."""
-        return self._brightness
+        # Ensure we always return at least 1 for brightness
+        if self._brightness is None:
+            return None
+        return int((self._brightness / 100.0) * 255.0)
     
     @property
     def rgb_color(self) -> Optional[Tuple[int, int, int]]:

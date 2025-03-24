@@ -103,11 +103,8 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
         
     def _setup_color_modes(self) -> None:
         """Set up supported color modes based on capabilities and current options."""
-        color_modes = {ColorMode.ONOFF}
-        
-        # Map features to color modes
-        if GoveeLightFeatures.BRIGHTNESS & self._capabilities.features:
-            color_modes.add(ColorMode.BRIGHTNESS)
+        # For simplicity, all Govee lights support at least brightness
+        color_modes = {ColorMode.ONOFF, ColorMode.BRIGHTNESS}
             
         # Only add RGB mode if not in temperature-only mode
         if (GoveeLightFeatures.COLOR_RGB & self._capabilities.features) and not self._temperature_only_mode:
@@ -133,9 +130,10 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
     @property
     def brightness(self) -> int | None:
         """Return the brightness of the light."""
-        if ColorMode.BRIGHTNESS not in self.supported_color_modes:
-            return None
-        return int((self._device.brightness / 100.0) * 255.0)
+        # Always return brightness if we have it, even if the color mode doesn't indicate it
+        if self._device.brightness is not None:
+            return int((self._device.brightness / 100.0) * 255.0)
+        return None
 
     @property
     def rgb_color(self) -> tuple[int, int, int] | None:
