@@ -80,7 +80,6 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
         self._capabilities = device.capabilities
         self._device_id = device.device_id
         self._model = device.model
-        self._supported_modes = {ColorMode.ONOFF}
         
         # Check if temperature-only mode is enabled globally
         self._temperature_only_mode = coordinator.config_entry.options.get(CONF_TEMP_ONLY_MODE, False)
@@ -134,21 +133,21 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
     @property
     def brightness(self) -> int | None:
         """Return the brightness of the light."""
-        if ColorMode.BRIGHTNESS not in self._supported_color_modes:
+        if ColorMode.BRIGHTNESS not in self.supported_color_modes:
             return None
         return int((self._device.brightness / 100.0) * 255.0)
 
     @property
     def rgb_color(self) -> tuple[int, int, int] | None:
         """Return the RGB color of the light."""
-        if ColorMode.RGB not in self._supported_color_modes:
+        if ColorMode.RGB not in self.supported_color_modes:
             return None
         return self._device.rgb_color
 
     @property
     def color_temp_kelvin(self) -> int | None:
         """Return the color temperature in Kelvin."""
-        if ColorMode.COLOR_TEMP not in self._supported_color_modes:
+        if ColorMode.COLOR_TEMP not in self.supported_color_modes:
             return None
         return self._device.temperature_color
 
@@ -165,16 +164,16 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
 
         # Determine which mode the device is in
         if (
-            ColorMode.COLOR_TEMP in self._supported_color_modes
+            ColorMode.COLOR_TEMP in self.supported_color_modes
             and self._device.temperature_color is not None
             and self._device.temperature_color > 0
         ):
             return ColorMode.COLOR_TEMP
 
-        if ColorMode.RGB in self._supported_color_modes:
+        if ColorMode.RGB in self.supported_color_modes:
             return ColorMode.RGB
 
-        if ColorMode.BRIGHTNESS in self._supported_color_modes:
+        if ColorMode.BRIGHTNESS in self.supported_color_modes:
             return ColorMode.BRIGHTNESS
 
         return ColorMode.ONOFF
