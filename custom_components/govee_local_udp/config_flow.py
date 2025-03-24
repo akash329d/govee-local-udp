@@ -37,7 +37,12 @@ class GoveeLocalUdpFlowHandler(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema({}),
+            data_schema=vol.Schema({
+                vol.Optional(CONF_FORCED_IP_ADDRESS): str,
+            }),
+            description_placeholders={
+                "note": "Discovery will automatically search for Govee devices on your network. If your devices aren't discovered, you can specify the IP address here."
+            }
         )
 
     @staticmethod

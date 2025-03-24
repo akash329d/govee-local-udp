@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "Set up Govee Local UDP to control your Govee devices locally without cloud dependence",
+        "description": "Set up Govee Local UDP to control your Govee devices locally without cloud dependence. {note}",
         "data": {
           "forced_ip_address": "Forced IP address (optional)"
         }
