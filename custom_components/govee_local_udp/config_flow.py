@@ -71,8 +71,8 @@ async def async_discover_devices(hass: HomeAssistant) -> bool:
     return devices_found
 
 
-class GoveeLocalProConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Govee Local Pro."""
+class GoveeLocalUdpConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for Govee Local UDP."""
 
     VERSION = 1
 
@@ -125,11 +125,11 @@ class GoveeLocalProConfigFlow(ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry):
         """Get the options flow for this handler."""
-        return GoveeLocalProOptionsFlow(config_entry)
+        return GoveeLocalUdpOptionsFlow(config_entry)
 
 
-class GoveeLocalProOptionsFlow(OptionsFlow):
-    """Handle options for the Govee Local Pro integration."""
+class GoveeLocalUdpOptionsFlow(OptionsFlow):
+    """Handle options for the Govee Local UDP integration."""
 
     def __init__(self, config_entry):
         """Initialize options flow."""
