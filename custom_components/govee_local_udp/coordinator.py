@@ -24,7 +24,7 @@ from .protocol.controller import GoveeController, GoveeLocalDevice
 _LOGGER = logging.getLogger(__name__)
 
 
-class GoveeLocalUDPCoordinator(DataUpdateCoordinator[List[GoveeLocalDevice]]):
+class GoveeLocalUdpCoordinator(DataUpdateCoordinator[List[GoveeLocalDevice]]):
     """Coordinator for Govee Local UDP integration."""
 
     config_entry: ConfigEntry
