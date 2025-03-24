@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Set up Govee Local Pro to control your Govee devices locally without cloud dependence",
+        "data": {
+          "forced_ip_address": "Forced IP address (optional)"
+        }
+      },
+      "confirm": {
+        "description": "Govee Local Pro will discover your Govee devices on the local network. Do you want to continue?"
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "no_devices_found": "[%key:common::config_flow::abort::no_devices_found%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Govee Local UDP Options",
+        "description": "Configure options for your Govee devices",
+        "data": {
+          "temperature_only_mode": "Temperature-only mode (prevents RGB control)"
+        }
+      }
+    }
+  }
+}

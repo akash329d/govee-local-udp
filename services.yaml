@@ -1,0 +1,17 @@
+# Service descriptions for Govee Local Pro
+
+set_scene:
+  name: Set Scene
+  description: Set a pre-defined scene for a Govee light.
+  target:
+    entity:
+      domain: light
+      integration: govee_local_pro
+  fields:
+    scene:
+      name: Scene
+      description: The name of the scene to set
+      example: "Ocean"
+      required: true
+      selector:
+        text:
