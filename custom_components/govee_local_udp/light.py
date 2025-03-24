@@ -78,10 +78,26 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
 
         # Get device capabilities
         self._capabilities = device.capabilities
+        self._device_id = device.device_id
+        self._model = device.model
         self._supported_modes = {ColorMode.ONOFF}
         
         # Check if temperature-only mode is enabled globally
         self._temperature_only_mode = coordinator.config_entry.options.get(CONF_TEMP_ONLY_MODE, False)
+
+        # Set up device info
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device.device_id)},
+            name=f"Govee {device.model}",
+            manufacturer=MANUFACTURER,
+            model=device.model,
+        )
+        
+        # Add version information if available
+        ble_sw = getattr(device, "ble_software_version", "")
+        wifi_sw = getattr(device, "wifi_software_version", "")
+        if ble_sw or wifi_sw:
+            self._attr_device_info["sw_version"] = f"{ble_sw} / {wifi_sw}"
 
         # Build available color modes based on current options
         self._setup_color_modes()
@@ -109,20 +125,6 @@ class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntit
             self._fixed_color_mode = next(iter(self._supported_color_modes))
         else:
             self._fixed_color_mode = None
-
-        # Device info
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device.device_id)},
-            name=f"Govee {device.model}",
-            manufacturer=MANUFACTURER,
-            model=device.model,
-        )
-        
-        # Add version information if available
-        ble_sw = getattr(device, "ble_software_version", "")
-        wifi_sw = getattr(device, "wifi_software_version", "")
-        if ble_sw or wifi_sw:
-            self._attr_device_info["sw_version"] = f"{ble_sw} / {wifi_sw}"
 
     @property
     def is_on(self) -> bool:
