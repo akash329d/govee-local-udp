@@ -1,4 +1,4 @@
-"""Diagnostics support for the Govee Local Pro integration."""
+"""Diagnostics support for the Govee Local UDP integration."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
-from .coordinator import GoveeLocalProCoordinator
+from .coordinator import GoveeLocalUdpCoordinator
 from .protocol.controller import GoveeLocalDevice
 
 # Keys to redact from the diagnostics data
@@ -21,7 +21,7 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> Dict[str, Any]:
     """Return diagnostics for a config entry."""
-    coordinator: GoveeLocalProCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: GoveeLocalUdpCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     # Convert device objects to dictionaries
     devices_data = []

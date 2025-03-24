@@ -1,4 +1,4 @@
-# Service descriptions for Govee Local Pro
+# Service descriptions for Govee Local UDP
 
 set_scene:
   name: Set Scene
@@ -6,7 +6,7 @@ set_scene:
   target:
     entity:
       domain: light
-      integration: govee_local_pro
+      integration: govee_local_udp
   fields:
     scene:
       name: Scene

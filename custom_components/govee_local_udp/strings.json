@@ -2,13 +2,13 @@
   "config": {
     "step": {
       "user": {
-        "description": "Set up Govee Local Pro to control your Govee devices locally without cloud dependence",
+        "description": "Set up Govee Local UDP to control your Govee devices locally without cloud dependence",
         "data": {
           "forced_ip_address": "Forced IP address (optional)"
         }
       },
       "confirm": {
-        "description": "Govee Local Pro will discover your Govee devices on the local network. Do you want to continue?"
+        "description": "Govee Local UDP will discover your Govee devices on the local network. Do you want to continue?"
       }
     },
     "abort": {

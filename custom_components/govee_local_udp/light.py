@@ -22,7 +22,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_TEMP_ONLY_MODE, DOMAIN, MANUFACTURER
-from .coordinator import GoveeLocalUDPCoordinator
+from .coordinator import GoveeLocalUdpCoordinator
 from .protocol.controller import GoveeLocalDevice
 from .protocol.message import GoveeLightFeatures
 
@@ -38,11 +38,11 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Govee lights from config entry."""
-    coordinator: GoveeLocalUDPCoordinator = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: GoveeLocalUdpCoordinator = hass.data[DOMAIN][config_entry.entry_id]
 
     # Add all current devices
     async_add_entities(
-        GoveeLocalUDPLight(coordinator, device) for device in coordinator.devices
+        GoveeLocalUdpLight(coordinator, device) for device in coordinator.devices
     )
 
     # Register callback for future device discovery
@@ -50,13 +50,13 @@ async def async_setup_entry(
     def device_discovery(device: GoveeLocalDevice, is_new: bool) -> bool:
         """Handle discovery of a new device."""
         if is_new:
-            async_add_entities([GoveeLocalUDPLight(coordinator, device)])
+            async_add_entities([GoveeLocalUdpLight(coordinator, device)])
         return True
 
     await coordinator.set_discovery_callback(device_discovery)
 
 
-class GoveeLocalUDPLight(CoordinatorEntity[GoveeLocalUDPCoordinator], LightEntity):
+class GoveeLocalUdpLight(CoordinatorEntity[GoveeLocalUdpCoordinator], LightEntity):
     """Representation of a Govee light."""
 
     _attr_has_entity_name = True
@@ -75,7 +75,7 @@ class GoveeLocalUDPLight(CoordinatorEntity[GoveeLocalUDPCoordinator], LightEntit
 
     def __init__(
         self,
-        coordinator: GoveeLocalUDPCoordinator,
+        coordinator: GoveeLocalUdpCoordinator,
         device: GoveeLocalDevice,
     ) -> None:
         """Initialize a Govee light."""

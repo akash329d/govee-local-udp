@@ -9,7 +9,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
 
 from .const import DOMAIN
-from .light import GoveeLocalProLight
+from .light import GoveeLocalUdpLight
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ SERVICE_SET_SCENE_SCHEMA = vol.Schema({
 
 
 async def async_setup_services(hass: HomeAssistant) -> None:
-    """Set up the Govee Local Pro services."""
+    """Set up the Govee Local UDP services."""
     component = EntityComponent(_LOGGER, DOMAIN, hass)
 
     async def handle_set_scene(service_call: ServiceCall) -> None:
@@ -38,7 +38,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 _LOGGER.warning("Entity %s not found", entity_id)
                 continue
                 
-            if not isinstance(entity, GoveeLocalProLight):
+            if not isinstance(entity, GoveeLocalUdpLight):
                 _LOGGER.warning("Entity %s is not a Govee light", entity_id)
                 continue
                 
@@ -64,6 +64,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
 
 
 async def async_unload_services(hass: HomeAssistant) -> None:
-    """Unload Govee Local Pro services."""
+    """Unload Govee Local UDP services."""
     if hass.services.has_service(DOMAIN, SERVICE_SET_SCENE):
         hass.services.async_remove(DOMAIN, SERVICE_SET_SCENE)
